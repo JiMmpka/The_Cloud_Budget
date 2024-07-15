@@ -25,6 +25,10 @@ body {
 }
 
 .btn-primary{
-  background-color: #819da9;
-  border-color: #819da9;
+  background-color: #e1b99f;
+  border-color: #e1b99f;
+}
+
+.header{
+  background-color: #e1b99f !important;
 }
