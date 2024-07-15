@@ -1,0 +1,15 @@
+.bg-light{
+    background-color: transparent  !important;
+}
+
+body {
+    background: url('../images/clauds-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .btn-primary{
+    background-color: #819da9;
+    border-color: #819da9;
+  }
