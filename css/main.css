@@ -1,20 +1,19 @@
-  .bi {
-    vertical-align: -.125em;
-    fill: currentColor;
-  }
+.bi {
+  vertical-align: -.125em;
+  fill: currentColor;
+}
   
-  .text-small {
-    font-size: 85%;
-  }
- 
-  .bg-primary {
-    background-color: transparent  !important;
+.text-small {
+  font-size: 85%;
+}
+
+.bg-primary {
+  background-color: transparent  !important;
 }
   
 .text-bg-primary{
     color: inherit !important;
     background-color: transparent  !important;
-    
 }
 
 body {
@@ -31,4 +30,54 @@ body {
 
 .nav-bg-color{
   background-color: #e1b99f !important;
+  z-index: 1060;
+}
+
+.navbar{
+  height: 120px;
+}
+
+.form-container {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 50px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.datepicker-modal .datepicker {
+  z-index: 1050;
+}
+
+.bottom-spacing {
+  margin-bottom: 50px;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.modal-dialog {
+  max-width: 200px;
+  margin: 1.75rem auto;
+}
+
+.modal-content {
+    border: none;
+}
+
+.modal-body {
+    padding: 0;
+}
+
+#modalDatepicker .datepicker-inline {
+    width: 100%;
 }
