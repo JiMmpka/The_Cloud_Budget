@@ -81,3 +81,10 @@ input[type="number"] {
 #modalDatepicker .datepicker-inline {
     width: 100%;
 }
+
+ .balanse-table, td, th{
+  justify-content: center;
+  border: 1px solid black;
+  margin: auto;
+  margin-top: 2rem;
+}
