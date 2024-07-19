@@ -52,7 +52,7 @@ body {
 }
 
 .bottom-spacing {
-  margin-bottom: 50px;
+  padding: 30px;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -82,9 +82,40 @@ input[type="number"] {
     width: 100%;
 }
 
- .balanse-table, td, th{
-  justify-content: center;
-  border: 1px solid black;
-  margin: auto;
-  margin-top: 2rem;
+.table-summary-color{
+  --bs-table-bg: #e1b99f;
+}
+
+.container-balanse {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 50px;
+}
+
+.table {
+  margin-bottom: 30px;
+}
+
+@media (max-width: 991px) {
+  .container {
+      padding: 15px;
+  }
+
+  .expenses-table {
+      margin-top: 30px; /* Dodaj margines, aby oddzielić tabele */
+  }
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  margin-bottom: 1rem;
+}
+
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
 }
