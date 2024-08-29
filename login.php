@@ -1,3 +1,13 @@
+<?php
+	session_start();
+	
+	if ((isset($_SESSION['loggedIn'])) && ($_SESSION['loggedIn']==true))
+	{
+		header('Location: index.php');
+		exit();
+	}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -34,7 +44,8 @@
                     </div>
                   </div>
                 </div>
-                <form action="#!">
+
+                <form action="logg.php" method="post">
                   <div class="row gy-3 overflow-hidden">
                     <div class="col-12">
                       <div class="form-floating mb-3">
@@ -63,6 +74,7 @@
                     </div>
                   </div>
                 </form>
+
                 <div class="row">
                   <div class="col-12">
                     <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row justify-content-md-end mt-4">
