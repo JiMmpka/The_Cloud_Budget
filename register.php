@@ -57,63 +57,39 @@
 		require_once "connect.php";
 		mysqli_report(MYSQLI_REPORT_STRICT);
 		
-		try 
-		{
+		try {
 			$connection = new mysqli($host, $db_user, $db_password, $db_name);
-			if ($connection->connect_errno!=0)
-			{
+			if ($connection->connect_errno!=0){
 				throw new Exception(mysqli_connect_errno());
-			}
-			else
-			{
+			} else {
+        
 				//Czy email już istnieje?
 				$result = $connection->query("SELECT id FROM users WHERE email='$email'");
 				
 				if (!$result) throw new Exception($connection->error);
 				
 				$same_emails_in_DB = $result->num_rows;
-				if($same_emails_in_DB > 0)
-				{
+				if($same_emails_in_DB > 0){
 					$validation_passed=false;
 					$_SESSION['e_email']="There is already an account associated with this email address";
 				}		
-
-				//Czy name jest już zarezerwowany?
-				$result = $connection->query("SELECT id FROM users WHERE username='$name'");
 				
-				if (!$result) throw new Exception($connection->error);
-				
-				$same_names_in_DB = $result->num_rows;
-				if($same_names_in_DB>0)
-				{
-					$validation_passed=false;
-					$_SESSION['e_name']="There is already a user with that name. Please choose another one";
-				}
-				
-				if ($validation_passed==true)
-				{
+				if ($validation_passed==true){
 					//Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
 					
-					if ($connection->query("INSERT INTO users VALUES (NULL, '$name', '$hash_password', '$email')"))
-					{
-						$_SESSION['udanarejestracja']=true;
-						header('Location: index.php');
-					}
-					else
-					{
+					if ($connection->query("INSERT INTO users VALUES (NULL, '$name', '$hash_password', '$email')")){
+						$_SESSION['successful_registration']=true;
+						header('Location: registration_success.php');
+					} else {
 						throw new Exception($connection->error);
 					}
-					
 				}
-				
 				$connection->close();
 			}
-			
 		}
-		catch(Exception $e)
-		{
-			echo '<span style="color:red;">Błąd serwera! Przepraszamy za niedogodności i prosimy o rejestrację w innym terminie!</span>';
-			echo '<br />Informacja developerska: '.$e;
+		catch(Exception $e){
+			echo '<span class="error">Server error! We apologize for the inconvenience and ask you to register at another time!</span>';
+			//echo '<br />Developer Information: '.$e;
 		}		
 	}
 ?>
@@ -125,7 +101,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claud Budget</title>
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/bs-brain@2.0.4/components/logins/login-9/assets/css/login-9.css">
+    <link rel="stylesheet" href="https://unpkg.com/bs-brain@2.0.4/components/registrations/registration-7/assets/css/registration-7.css">
 
     <link rel="stylesheet" href="./css/registration.css">
     <link rel="stylesheet" href="./css/main.css">
@@ -133,7 +109,7 @@
 <body>
     
     <!-- Registration Component -->
-  <section class="bg-light p-3 p-md-4 p-xl-5">
+  <section class="bg-light pt-3 p-md-4 p-xl-5">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-12 col-md-9 col-lg-7 col-xl-6 col-xxl-5">

@@ -45,7 +45,7 @@
                   </div>
                 </div>
 
-                <form action="logg.php" method="post">
+                <form action="login_handler.php" method="post">
                   <div class="row gy-3 overflow-hidden">
                     <div class="col-12">
                       <div class="form-floating mb-3">
@@ -57,6 +57,9 @@
                       <div class="form-floating mb-3">
                         <input type="password" class="form-control" name="password" id="password" value="" placeholder="Password" required>
                         <label for="password" class="form-label">Password</label>
+						<?php
+							if(isset($_SESSION['error'])) echo $_SESSION['error'];
+						?>
                       </div>
                     </div>
                     <div class="col-12">
