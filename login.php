@@ -1,3 +1,13 @@
+<?php
+	session_start();
+	
+	if ((isset($_SESSION['loggedIn'])) && ($_SESSION['loggedIn']==true))
+	{
+		header('Location: index.php');
+		exit();
+	}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,6 +16,7 @@
       <title>Claud Budget</title>
       <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
       <link rel="stylesheet" href="https://unpkg.com/bs-brain@2.0.4/components/logins/login-9/assets/css/login-9.css">
+      <link rel="stylesheet" href="./css/auth.css">
       <link rel="stylesheet" href="./css/main.css">
   </head>
   <body>
@@ -30,11 +41,12 @@
                   <div class="col-12">
                     <div class="mb-4">
                       <h3>Sign in</h3>
-                      <p>Don't have an account? <a href="./register.html">Sign up</a></p>
+                      <p>Don't have an account? <a href="./register.php">Sign up</a></p>
                     </div>
                   </div>
                 </div>
-                <form action="#!">
+
+                <form action="login_handler.php" method="post">
                   <div class="row gy-3 overflow-hidden">
                     <div class="col-12">
                       <div class="form-floating mb-3">
@@ -46,6 +58,9 @@
                       <div class="form-floating mb-3">
                         <input type="password" class="form-control" name="password" id="password" value="" placeholder="Password" required>
                         <label for="password" class="form-label">Password</label>
+						<?php
+							if(isset($_SESSION['error'])) echo $_SESSION['error'];
+						?>
                       </div>
                     </div>
                     <div class="col-12">
@@ -63,6 +78,7 @@
                     </div>
                   </div>
                 </form>
+
                 <div class="row">
                   <div class="col-12">
                     <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row justify-content-md-end mt-4">

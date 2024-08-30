@@ -1,0 +1,19 @@
+.bg-light{
+  background-color: transparent  !important;
+}
+
+body {
+  background: url('../images/clauds-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  margin: 0;
+}
+
+.btn-primary{
+  background-color: #e1b99f;
+  border-color: #e1b99f;
+  --bs-btn-hover-bg: #819da9 !important;
+  --bs-btn-hover-border-color: #819da9 !important;
+  --bs-btn-active-bg: #819da9 !important;
+  --bs-btn-active-border-color: #819da9 !important;
+}
