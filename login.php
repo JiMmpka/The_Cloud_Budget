@@ -16,6 +16,7 @@
       <title>Claud Budget</title>
       <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
       <link rel="stylesheet" href="https://unpkg.com/bs-brain@2.0.4/components/logins/login-9/assets/css/login-9.css">
+      <link rel="stylesheet" href="./css/auth.css">
       <link rel="stylesheet" href="./css/main.css">
   </head>
   <body>

@@ -17,9 +17,3 @@ body {
   --bs-btn-active-bg: #819da9 !important;
   --bs-btn-active-border-color: #819da9 !important;
 }
-
-.error{
-  color:red;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
