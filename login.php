@@ -1,8 +1,7 @@
 <?php
 	session_start();
 	
-	if ((isset($_SESSION['loggedIn'])) && ($_SESSION['loggedIn']==true))
-	{
+	if ((isset($_SESSION['loggedIn'])) && ($_SESSION['loggedIn']==true)){
 		header('Location: index.php');
 		exit();
 	}
@@ -58,9 +57,12 @@
                       <div class="form-floating mb-3">
                         <input type="password" class="form-control" name="password" id="password" value="" placeholder="Password" required>
                         <label for="password" class="form-label">Password</label>
-						<?php
-							if(isset($_SESSION['error'])) echo $_SESSION['error'];
-						?>
+                        <?php
+                          if(isset($_SESSION['error'])){
+                            echo $_SESSION['error'];
+                            unset($_SESSION['error']);
+                          }
+                        ?>
                       </div>
                     </div>
                     <div class="col-12">
