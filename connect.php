@@ -1,6 +1,7 @@
 <?php
-	$host = "localhost";
-	$db_user = "root";
-	$db_password = "";
-	$db_name = "claud_budget";
-?>
+return [
+	'host' => 'localhost', 
+	'user' => 'root',
+	'password' => '',
+	'database' => 'claud_budget'
+];
