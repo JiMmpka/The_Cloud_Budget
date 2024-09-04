@@ -5,48 +5,47 @@
 		header('Location: login.php');
 		exit();
     }
-	require_once "connect.php";
+	$config = require_once "connect.php";
+	
+	$dsn = "mysql:host=" . $config['host'] . ";dbname=" . $config['database'] . ";charset=utf8";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ];
 
     try{
-        $connection = new mysqli($host, $db_user, $db_password, $db_name);
+        $pdo = new PDO($dsn, $config['user'], $config['password'], $options);
         
-        if ($connection->connect_errno!=0){
-            throw new Exception("", $connection->connect_errno);
-        } else {
-            $email = $_POST['email'];
-            $password = $_POST['password'];
-            
-            $email = htmlentities($email, ENT_QUOTES, "UTF-8");
+		$email = $_POST['email'];
+		$password = $_POST['password'];
+		
+		$email = htmlentities($email, ENT_QUOTES, "UTF-8");
+				
+		$stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+		$stmt->execute([$email]);
+	
+		if($stmt->rowCount() > 0){
+			$user_data = $stmt->fetch();
+			
+			if (password_verify($password, $user_data['password'])){
+				$_SESSION['loggedIn'] = true;
+				$_SESSION['id'] = $user_data['id'];
+				$_SESSION['username'] = $user_data['username'];
+				$_SESSION['email'] = $user_data['email'];
+				
+				unset($_SESSION['error']);
+				header('Location: index.php');
+			} else {
+				$_SESSION['error'] = '<span class="error">Incorrect email or password!</span>';
+				header('Location: login.php');
+			}
+		} else {
+			$_SESSION['error'] = '<span class="error">Incorrect email or password!</span>';
+			header('Location: login.php');	
+		}	
         
-            if ($result = $connection->query(
-            sprintf("SELECT * FROM users WHERE email='%s'",
-            mysqli_real_escape_string($connection, $email))))
-            {
-                $how_much_users = $result->num_rows;
-                if($how_much_users > 0){
-                    $user_data = $result->fetch_assoc();
-                    
-                    if (password_verify($password, $user_data['password'])){
-                        $_SESSION['loggedIn'] = true;
-                        $_SESSION['id'] = $user_data['id'];
-                        $_SESSION['username'] = $user_data['username'];
-                        $_SESSION['email'] = $user_data['email'];
-                        
-                        unset($_SESSION['error']);
-                        $result->free_result();
-                        header('Location: index.php');
-                    } else {
-                        $_SESSION['error'] = '<span class="error">Incorrect email or password!</span>';
-                        header('Location: login.php');
-                    }
-                } else {
-                    $_SESSION['error'] = '<span class="error">Incorrect email or password!</span>';
-                    header('Location: login.php');	
-                }	
-            }
-            $connection->close();
-        }
-    } catch (Exception $e) {
-        echo "Error: " . $e->getCode();
+    } catch (PDOException  $e) {
+        echo "Error: " . $e->getMessage();
     }
 ?>

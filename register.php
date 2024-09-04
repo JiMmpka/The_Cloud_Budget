@@ -1,97 +1,118 @@
 <?php
-	session_start();
-	
-	if (isset($_POST['email'])){
-		$validation_passed=true;
-		
-		//Sprawdź poprawność name'a
-		$name = $_POST['name'];
-		
-		//Sprawdzenie długości nicka
-		if ((strlen($name)<3) || (strlen($name)>20))
-		{
-			$validation_passed=false;
-			$_SESSION['e_name']="The name should be between 3 and 20 characters long";
-		}
-		
-		if (ctype_alnum($name)==false)
-		{
-			$validation_passed=false;
-			$_SESSION['e_name']="The name can only consist of letters and numbers";
-		}
-		
-		// Sprawdź poprawność adresu email
-		$email = $_POST['email'];
-		$emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
-		
-		if ((filter_var($emailB, FILTER_VALIDATE_EMAIL)==false) || ($emailB!=$email))
-		{
-			$validation_passed=false;
-			$_SESSION['e_email']="Please provide a valid email address";
-		}
-		
-		//Sprawdź poprawność hasła
-		$password1 = $_POST['password1'];
-		$password2 = $_POST['password2'];
-		
-		if ((strlen($password1)<8) || (strlen($password1)>20))
-		{
-			$validation_passed=false;
-			$_SESSION['e_password']="Password must be between 8 and 20 characters long";
-		}
-		
-		if ($password1!=$password2)
-		{
-			$validation_passed=false;
-			$_SESSION['e_password']="The passwords provided are not identical";
-		}	
+session_start();
 
-		$hash_password = password_hash($password1, PASSWORD_DEFAULT);
+if (isset($_POST['email'])) {
+    $validation_passed = true;
+    
+    // Sprawdź poprawność name'a
+    $name = $_POST['name'];
+    
+    // Sprawdzenie długości nicka
+    if ((strlen($name) < 3) || (strlen($name) > 20)) {
+        $validation_passed = false;
+        $_SESSION['e_name'] = "The name should be between 3 and 20 characters long";
+    }
+    
+    if (!ctype_alnum($name)) {
+        $validation_passed = false;
+        $_SESSION['e_name'] = "The name can only consist of letters and numbers";
+    }
+    
+    // Sprawdź poprawność adresu email
+    $email = $_POST['email'];
+    $emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
+    
+    if ((filter_var($emailB, FILTER_VALIDATE_EMAIL) === false) || ($emailB != $email)) {
+        $validation_passed = false;
+        $_SESSION['e_email'] = "Please provide a valid email address";
+    }
+    
+    // Sprawdź poprawność hasła
+    $password1 = $_POST['password1'];
+    $password2 = $_POST['password2'];
+    
+    if ((strlen($password1) < 8) || (strlen($password1) > 20)) {
+        $validation_passed = false;
+        $_SESSION['e_password'] = "Password must be between 8 and 20 characters long";
+    }
+    
+    if ($password1 != $password2) {
+        $validation_passed = false;
+        $_SESSION['e_password'] = "The passwords provided are not identical";
+    }    
 
-		//Zapamiętaj wprowadzone dane
-		$_SESSION['fr_name'] = $name;
-		$_SESSION['fr_email'] = $email;
-		$_SESSION['fr_pass1'] = $password1;
-		$_SESSION['fr_pass2'] = $password2;
+    $hash_password = password_hash($password1, PASSWORD_DEFAULT);
 
-		require_once "connect.php";
-		mysqli_report(MYSQLI_REPORT_STRICT);
-		
-		try {
-			$connection = new mysqli($host, $db_user, $db_password, $db_name);
-			if ($connection->connect_errno!=0){
-				throw new Exception(mysqli_connect_errno());
-			} else {
+    // Zapamiętaj wprowadzone dane
+    $_SESSION['fr_name'] = $name;
+    $_SESSION['fr_email'] = $email;
+    $_SESSION['fr_pass1'] = $password1;
+    $_SESSION['fr_pass2'] = $password2;
 
-				//Czy email już istnieje?
-				$result = $connection->query("SELECT id FROM users WHERE email='$email'");
+    $config = require_once "connect.php";
+
+    $dsn = "mysql:host=" . $config['host'] . ";dbname=" . $config['database'] . ";charset=utf8";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ];
+    
+    try {
+        $pdo = new PDO($dsn, $config['user'], $config['password'], $options);
+    
+        // Sprawdź, czy email już istnieje
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+
+        if ($stmt->rowCount() > 0) {    
+            $validation_passed = false;
+            $_SESSION['e_email'] = "There is already an account associated with this email address";
+        }
+            
+        if ($validation_passed) {    
+            // Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
+            $stmt = $pdo->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
+
+            if ($stmt->execute([$name, $hash_password, $email])) {    
+              $_SESSION['successful_registration'] = true;
+				      $userId = $pdo->lastInsertId();
 				
-				if (!$result) throw new Exception($connection->error);
-				
-				$same_emails_in_DB = $result->num_rows;
-				if($same_emails_in_DB > 0){
-					$validation_passed=false;
-					$_SESSION['e_email']="There is already an account associated with this email address";
-				}		
-				
-				if ($validation_passed==true){
-					//Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
-					
-					if ($connection->query("INSERT INTO users VALUES (NULL, '$name', '$hash_password', '$email')")){
-						$_SESSION['successful_registration']=true;
-						header('Location: registration_success.php');
-					} else {
-						throw new Exception($connection->error);
-					}
-				}
-				$connection->close();
-			}
-		}
-		catch(Exception $e){
-			echo '<span class="error">Server error! We apologize for the inconvenience and ask you to register at another time!</span>';
-			//echo '<br />Developer Information: '.$e;
-		}		
-	}
+                // Rozpoczęcie transakcji
+              $pdo->beginTransaction();
+
+              try {
+                $stmt = $pdo->prepare("INSERT INTO incomes_category_assigned_to_users (`user_id`, `name`) 
+                            SELECT ?, `name` FROM incomes_category_default");
+                $stmt->execute([$userId]);
+
+                $stmt = $pdo->prepare("INSERT INTO expenses_category_assigned_to_users (`user_id`, `name`) 
+                            SELECT ?, `name` FROM expenses_category_default");
+                $stmt->execute([$userId]);
+
+                $stmt = $pdo->prepare("INSERT INTO payment_methods_assigned_to_users (`user_id`, `name`) 
+                            SELECT ?, `name` FROM payment_methods_default");
+                $stmt->execute([$userId]);
+
+                // Zatwierdź transakcję
+                $pdo->commit();
+
+                header('Location: registration_success.php');
+                exit();
+              } catch (Exception $e) {
+                // Wycofaj transakcję w przypadku błędu
+                $pdo->rollBack();
+                throw new Exception("Failed to assign categories: " . $e->getMessage());
+              }
+            } else {    
+                throw new Exception("Failed to register user." . $e->getMessage());
+            }
+        }
+    } catch (Exception $e) {
+        echo '<span class="error">Server error! We apologize for the inconvenience and ask you to register at another time!</span>';
+        //echo '<br />Developer Information: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -135,19 +156,17 @@
                     <div class="form-floating mb-3">
 
                       <input type="text" class="form-control" name="name" id="name" placeholder="Name" required value="<?php
-                        if (isset($_SESSION['fr_name']))
-                        {
-                          echo $_SESSION['fr_name'];
+                        if (isset($_SESSION['fr_name'])) {
+                          echo htmlspecialchars($_SESSION['fr_name'], ENT_QUOTES, 'UTF-8');
                           unset($_SESSION['fr_name']);
                         }
                       ?>">
                       <label for="name" class="form-label">Name</label>
 
                       <?php
-                        if (isset($_SESSION['e_name']))
-                        {
-                          echo '<div class="error">'.$_SESSION['e_name'].'</div>';
-                          unset($_SESSION['e_name']);
+                        if (isset($_SESSION['e_name'])) {
+                            echo '<div class="error">'.htmlspecialchars($_SESSION['e_name'], ENT_QUOTES, 'UTF-8').'</div>';
+                            unset($_SESSION['e_name']);
                         }
                       ?>
 
@@ -157,19 +176,16 @@
                     <div class="form-floating mb-3">
 
                       <input type="email" class="form-control" name="email" id="email" placeholder="name@example.com" required value="<?php
-                        if (isset($_SESSION['fr_email']))
-                        {
-                          echo $_SESSION['fr_email'];
+                        if (isset($_SESSION['fr_email'])) {
+                          echo htmlspecialchars($_SESSION['fr_email'], ENT_QUOTES, 'UTF-8');
                           unset($_SESSION['fr_email']);
                         }
                       ?>">
                       <label for="email" class="form-label">Email</label>
-
                       <?php
-                        if (isset($_SESSION['e_email']))
-                        {
-                          echo '<div class="error">'.$_SESSION['e_email'].'</div>';
-                          unset($_SESSION['e_email']);
+                        if (isset($_SESSION['e_email'])) {
+                            echo '<div class="error">'.htmlspecialchars($_SESSION['e_email'], ENT_QUOTES, 'UTF-8').'</div>';
+                            unset($_SESSION['e_email']);
                         }
                       ?>
 
@@ -179,9 +195,8 @@
                     <div class="form-floating mb-3">
                       
                       <input type="password" class="form-control" name="password1" id="password1" placeholder="Password" required value="<?php
-                        if (isset($_SESSION['fr_pass1']))
-                        {
-                          echo $_SESSION['fr_pass1'];
+                        if (isset($_SESSION['fr_pass1'])) {
+                          echo htmlspecialchars($_SESSION['fr_pass1'], ENT_QUOTES, 'UTF-8');
                           unset($_SESSION['fr_pass1']);
                         }
                       ?>">
@@ -193,19 +208,16 @@
                     <div class="form-floating mb-3">
                       
                       <input type="password" class="form-control" name="password2" id="password2" placeholder="Confirm password" required value="<?php
-                        if (isset($_SESSION['fr_pass2']))
-                        {
-                          echo $_SESSION['fr_pass2'];
+                        if (isset($_SESSION['fr_pass2'])) {
+                          echo htmlspecialchars($_SESSION['fr_pass2'], ENT_QUOTES, 'UTF-8');
                           unset($_SESSION['fr_pass2']);
                         }
                       ?>">
                       <label for="password2" class="form-label">Confirm password</label>
-
                       <?php
-                        if (isset($_SESSION['e_password']))
-                        {
-                          echo '<div class="error">'.$_SESSION['e_password'].'</div>';
-                          unset($_SESSION['e_password']);
+                        if (isset($_SESSION['e_password'])) {
+                            echo '<div class="error">'.htmlspecialchars($_SESSION['e_password'], ENT_QUOTES, 'UTF-8').'</div>';
+                            unset($_SESSION['e_password']);
                         }
                       ?>		
 
