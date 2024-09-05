@@ -125,3 +125,12 @@ input[type="number"] {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.btn-primary{
+  background-color: #e1b99f;
+  border-color: #e1b99f;
+  --bs-btn-hover-bg: #819da9 !important;
+  --bs-btn-hover-border-color: #819da9 !important;
+  --bs-btn-active-bg: #819da9 !important;
+  --bs-btn-active-border-color: #819da9 !important;
+}
