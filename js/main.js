@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $dateInput.value = selectedDate;
             dateModal.hide();
         } else {
-            alert("Selected date is invalid or out of allowed range.");
+            alert("Invalid date. Please enter a date between 2000-01-01 and today.");
         }
     });
 
