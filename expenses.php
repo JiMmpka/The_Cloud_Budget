@@ -1,4 +1,4 @@
-<?php //TO DOO pobranie payment metchod  z serwera i wstawienie do formularza oraz dodanie wydatku do bazy danych
+<?php //TO DOO dodanie wydatku do bazy danych
 	session_start();
 	
 	if ((!isset($_SESSION['loggedIn'])) && (!$_SESSION['loggedIn']==true)){
@@ -14,25 +14,35 @@
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false
     ];
-
-    try{
-        $pdo = new PDO($dsn, $config['user'], $config['password'], $options);
-		
+	try {
+		$pdo = new PDO($dsn, $config['user'], $config['password'], $options);
+	
 		$user_id_form_db = $_SESSION['id'];
-        
-		$stmt = $pdo->prepare("SELECT * FROM expenses_category_assigned_to_users WHERE user_id= ?");
+	
+		// Pobieranie danych z tabeli expenses_category_assigned_to_users
+		$stmt = $pdo->prepare("SELECT * FROM expenses_category_assigned_to_users WHERE user_id = ?");
 		$stmt->execute([$user_id_form_db]);
 	
-		if($stmt->rowCount() > 0){
+		if ($stmt->rowCount() > 0) {
 			$expenses_category_user_data = $stmt->fetchAll();
-				
 			unset($_SESSION['expenses_category_error']);
 		} else {
 			$_SESSION['expenses_category_error'] = '<span class="error">Unable to load category names</span>';
-		}	
-    } catch (PDOException  $e) {
-        echo "Error: " . $e->getMessage();
-    }
+		}
+	
+		// Pobieranie danych z tabeli payment_methods_assigned_to_users
+		$stmt = $pdo->prepare("SELECT * FROM payment_methods_assigned_to_users WHERE user_id = ?");
+		$stmt->execute([$user_id_form_db]);
+	
+		if ($stmt->rowCount() > 0) {
+			$payment_methods_user_data = $stmt->fetchAll();
+			unset($_SESSION['payment_methods_error']);
+		} else {
+			$_SESSION['payment_methods_error'] = '<span class="error">Unable to load payment methods</span>';
+		}
+	} catch (PDOException $e) {
+		echo "Error: " . $e->getMessage();
+	}
 	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		// Pobieranie danych z formularza
@@ -59,7 +69,7 @@
 		}
 		
 		// Walidacja metody płatności
-		if (!isset($_POST['paymentMethod']) || !in_array($_POST['paymentMethod'], ['Cash', 'Debit card', 'Credit card'])) { //TODOO do zmiany kategorie na sztywno na aktywną liste z serwera
+		if (!isset($_POST['paymentMethod']) || !in_array($_POST['paymentMethod'], array_column($payment_methods_user_data, 'name'))) {
 			$_SESSION['e_paymentMethod'] = "Invalid payment method.";
 		}
 
@@ -136,42 +146,32 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Payment method:</label>
+
                             <div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod1" required value="Cash" <?php
-										if ((isset($_SESSION['fr_payment_method'])) && ($_SESSION['fr_payment_method'] === 'Cash')) {
-										  'checked';
-										  unset($_SESSION['fr_payment_method']);
-										}
-									?>>
-                                    <label class="form-check-label" for="paymentMethod1">Cash</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod2" value="Debit card" <?php
-										if ((isset($_SESSION['fr_payment_method'])) && ($_SESSION['fr_payment_method'] === 'Debit card')) {
-										  'checked';
-										  unset($_SESSION['fr_payment_method']);
-										}
-									?>>
-                                    <label class="form-check-label" for="paymentMethod2">Debit card</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod3" value="Credit card" <?php
-										if ((isset($_SESSION['fr_payment_method'])) && ($_SESSION['fr_payment_method'] === 'Credit card')) {
-										  'checked';
-										  unset($_SESSION['fr_payment_method']);
-										}
-									?>>	
-                                    <label class="form-check-label" for="paymentMethod3">Credit card</label>
-                                </div>
-								
-								<?php
-									if (isset($_SESSION['e_paymentMethod'])) {
-										echo '<div class="error">'.htmlspecialchars($_SESSION['e_paymentMethod'], ENT_QUOTES, 'UTF-8').'</div>';
-										unset($_SESSION['e_paymentMethod']);
-									}
-								?>
-                            </div>
+								<?php if (isset($payment_methods_user_data)):
+									$i = 1;
+									foreach ($payment_methods_user_data as $payment_method): ?>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod<?php echo $i; ?>" required value="<?php echo $payment_method['name']; ?>" 
+											<?php 
+												if (isset($_SESSION['fr_payment_method']) && $_SESSION['fr_payment_method'] === $payment_method['name']) {
+													echo 'checked';
+													unset($_SESSION['fr_payment_method']);
+												}
+											?>>
+											<label class="form-check-label" for="paymentMethod<?php echo $i; ?>"><?php echo $payment_method['name']; ?></label>
+										</div>
+										<?php $i++;
+									endforeach;
+								endif; ?>
+							</div>
+
+							<?php
+								if (isset($_SESSION['e_paymentMethod'])) {
+									echo '<div class="error">'.htmlspecialchars($_SESSION['e_paymentMethod'], ENT_QUOTES, 'UTF-8').'</div>';
+									unset($_SESSION['e_paymentMethod']);
+								}
+							?>
                         </div>
                         <div class="mb-3">
 							<label for="category" class="form-label">Category:</label>
