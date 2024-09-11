@@ -1,4 +1,4 @@
-<?php //TO DOO dodanie wydatku do bazy danych
+<?php //TO DOO dodanie wydatku do bazy danych, ustawić aktualną datę po kliknięciu w Cencel
 	session_start();
 	
 	if ((!isset($_SESSION['loggedIn'])) && (!$_SESSION['loggedIn']==true)){
@@ -45,6 +45,7 @@
 	}
 	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+		$validation_passed = true;
 		// Pobieranie danych z formularza
 		$amount = filter_var($_POST['amount'], FILTER_VALIDATE_FLOAT);
 		$date = $_POST['date'];
@@ -54,27 +55,32 @@
 
 		// Walidacja amount
 		if (!is_numeric($amount) || $amount <= 0) {
+			$validation_passed = false;
 			$_SESSION['e_amount'] = "Invalid amount. It must be a positive number.";
 		}
 
 		// Walidacja date
 		$date_regex = '/^\d{4}-\d{2}-\d{2}$/';
 		if (!preg_match($date_regex, $date)) {
+			$validation_passed = false;
 			$_SESSION['e_date'] = "Invalid date format. Please use yyyy-mm-dd.";
 		}
 
 		$date_parts = explode('-', $date);
 		if (!checkdate($date_parts[1], $date_parts[2], $date_parts[0])) {
+			$validation_passed = false;
 			$_SESSION['e_date'] = "Invalid date. Please enter a valid date.";
 		}
 		
 		// Walidacja metody płatności
 		if (!isset($_POST['paymentMethod']) || !in_array($_POST['paymentMethod'], array_column($payment_methods_user_data, 'name'))) {
+			$validation_passed = false;
 			$_SESSION['e_paymentMethod'] = "Invalid payment method.";
 		}
 
 		// Walidacja kategorii
 		if (!isset($_POST['category']) || !in_array($_POST['category'], array_column($expenses_category_user_data, 'name'))) {
+			$validation_passed = false;
 			$_SESSION['e_category'] = "Invalid category selected.";
 		}
 
@@ -86,8 +92,37 @@
 		$_SESSION['fr_payment_method'] = $paymentMethod;
 		$_SESSION['fr_category'] = $category;
 		$_SESSION['fr_comment'] = $comment;
+		
+		try {	
+			if ($validation_passed) {    
+				// Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
+				$stmt = $pdo->prepare("
+				INSERT INTO expenses (user_id, expense_category_assigned_to_user_id, payment_method_assigned_to_user_id, amount, date_of_expense, expense_comment) 
+				VALUES (?, 
+					(SELECT id FROM expenses_category_assigned_to_users WHERE user_id = ? AND name = ? LIMIT 1), 
+					(SELECT id FROM payment_methods_assigned_to_users WHERE user_id = ? AND name = ? LIMIT 1), 
+					?, ?, ?
+				)");
 
-		echo "Expense added successfully!";
+				if ($stmt->execute([$user_id_form_db, $user_id_form_db, $category, $user_id_form_db, $paymentMethod, $amount, $date, $comment])){    
+					echo "Expense added successfully!";
+					
+					unset($_SESSION['fr_amount']);
+					unset($_SESSION['fr_date']);
+					unset($_SESSION['fr_payment_method']);
+					unset($_SESSION['fr_category']);
+					unset($_SESSION['fr_comment']);
+					//echo  "Kategoria: ".$category.", Metoda płatności: ". $paymentMethod;///////////////////////////////////////////////////////////
+					header('Location: expenses.php');
+					exit();
+				} else {    
+					throw new Exception("Failed to add expense." . $e->getMessage());
+				}
+			}
+		} catch (Exception $e) {
+			echo '<span class="error">Server error! We apologize for the inconvenience and ask you to add expenses later!</span>';
+			//echo '<br />Developer Information: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+		}
 	}
 ?>
 
@@ -104,7 +139,7 @@
             <div class="container mt-5">
                 <div class="form-container">
                     <h1 class="mb-4">Add Expense</h1>
-                    <form>
+                    <form method="post">
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount:</label>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name= "amount" placeholder="Enter amount" required value="<?php
@@ -146,7 +181,6 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Payment method:</label>
-
                             <div>
 								<?php if (isset($payment_methods_user_data)):
 									$i = 1;
@@ -173,6 +207,7 @@
 								}
 							?>
                         </div>
+						
                         <div class="mb-3">
 							<label for="category" class="form-label">Category:</label>
 							<select class="form-select" id="category" name="category" required>
@@ -183,8 +218,9 @@
 									$selected = isset($_SESSION['fr_category']) && $_SESSION['fr_category'] == $expenses_category['name'] ? 'selected' : '';
 									echo '<option value="' . htmlspecialchars($expenses_category['name'], ENT_QUOTES, 'UTF-8') . '" ' . $selected . '>' . htmlspecialchars($expenses_category['name'], ENT_QUOTES, 'UTF-8') . '</option>';
 								}
+								unset($_SESSION['fr_category']);
 								?>
-								<option value="Other expenses" <?php echo isset($_SESSION['fr_category']) && $_SESSION['fr_category'] == 'Other expenses' ? 'selected' : ''; ?>>Other expenses</option>
+								
 							</select>
 							
 							<?php
@@ -201,13 +237,13 @@
 								value="<?php
 								if (isset($_SESSION['fr_comment'])) {
 									echo htmlspecialchars($_SESSION['fr_comment'], ENT_QUOTES, 'UTF-8');
-									unset($_SESSION['fr_comment']); // Opcjonalnie: usuń po wyświetleniu
+									unset($_SESSION['fr_comment']); 
 								}
 								?>">
 						</div>
 
                         <button type="submit" class="btn btn-primary">Add</button>
-                        <button type="reset" class="btn btn-secondary">Cancel</button>
+                        <button type="reset" id="cancelButton" class="btn btn-secondary">Cancel</button>
                     </form>
                 </div>
             </div>
