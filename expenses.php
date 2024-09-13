@@ -1,4 +1,4 @@
-<?php //TO DOO dodanie wydatku do bazy danych, ustawić aktualną datę po kliknięciu w Cencel
+<?php
 	session_start();
 	
 	if ((!isset($_SESSION['loggedIn'])) && (!$_SESSION['loggedIn']==true)){
@@ -86,13 +86,7 @@
 
 		// Walidacja komentarza (opcjonalne)
 		$comment = isset($_POST['comment']) ? htmlspecialchars($_POST['comment'], ENT_QUOTES, 'UTF-8') : null;
-		
-		$_SESSION['fr_amount'] = $amount;
-		$_SESSION['fr_date'] = $date;
-		$_SESSION['fr_payment_method'] = $paymentMethod;
-		$_SESSION['fr_category'] = $category;
-		$_SESSION['fr_comment'] = $comment;
-		
+				
 		try {	
 			if ($validation_passed) {    
 				// Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
@@ -104,25 +98,33 @@
 					?, ?, ?
 				)");
 
-				if ($stmt->execute([$user_id_form_db, $user_id_form_db, $category, $user_id_form_db, $paymentMethod, $amount, $date, $comment])){    
-					echo "Expense added successfully!";
+				if ($stmt->execute([$user_id_form_db, $user_id_form_db, $category, $user_id_form_db, $paymentMethod, $amount, $date, $comment])){    			
+					$_SESSION['success_message'] = "Expense added successfully!";
 					
 					unset($_SESSION['fr_amount']);
 					unset($_SESSION['fr_date']);
 					unset($_SESSION['fr_payment_method']);
 					unset($_SESSION['fr_category']);
 					unset($_SESSION['fr_comment']);
-					//echo  "Kategoria: ".$category.", Metoda płatności: ". $paymentMethod;///////////////////////////////////////////////////////////
-					header('Location: expenses.php');
-					exit();
 				} else {    
-					throw new Exception("Failed to add expense." . $e->getMessage());
+					$_SESSION['fr_amount'] = $amount;
+					$_SESSION['fr_date'] = $date;
+					$_SESSION['fr_payment_method'] = $paymentMethod;
+					$_SESSION['fr_category'] = $category;
+					$_SESSION['fr_comment'] = $comment;
+					throw new Exception("Failed to add expense.");
+					//throw new Exception("Failed to add expense.". $e->getMessage());
 				}
 			}
 		} catch (Exception $e) {
 			echo '<span class="error">Server error! We apologize for the inconvenience and ask you to add expenses later!</span>';
 			//echo '<br />Developer Information: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
 		}
+	}
+	// ADD: Wyświetlenie komunikatu o sukcesie
+	if (isset($_SESSION['success_message'])) {
+		$successMessage = $_SESSION['success_message'];
+		unset($_SESSION['success_message']); // ADD: Usuń komunikat po wyświetleniu
 	}
 ?>
 
@@ -139,7 +141,7 @@
             <div class="container mt-5">
                 <div class="form-container">
                     <h1 class="mb-4">Add Expense</h1>
-                    <form method="post">
+                    <form method="post" id="form">
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount:</label>
                             <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name= "amount" placeholder="Enter amount" required value="<?php
@@ -237,13 +239,13 @@
 								value="<?php
 								if (isset($_SESSION['fr_comment'])) {
 									echo htmlspecialchars($_SESSION['fr_comment'], ENT_QUOTES, 'UTF-8');
-									unset($_SESSION['fr_comment']); 
+									unset($_SESSION['fr_comment']); // Opcjonalnie: usuń po wyświetleniu
 								}
 								?>">
 						</div>
 
                         <button type="submit" class="btn btn-primary">Add</button>
-                        <button type="reset" id="cancelButton" class="btn btn-secondary">Cancel</button>
+                        <button type="button" class="btn btn-secondary" id="cancelButton">Cancel</button>
                     </form>
                 </div>
             </div>
@@ -260,6 +262,26 @@
                 </div>
             </div>
         </div>
+		
+		<!-- Modal for success message -->
+		<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered" style="min-width:300px" role="document"> 
+				<div class="modal-content">
+					<div class="modal-body d-flex justify-content-center align-items-center modal-dimensions">
+						<?php if (isset($successMessage)): ?>
+							<p class="text-center success-message" id="successMessage"><?php echo $successMessage; ?></p>
+						<?php endif; ?>
+					</div>
+					<div class="modal-footer justify-content-center">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="$('#successModal').modal('hide');">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script>
+			var successMessage = "<?php echo isset($successMessage) ? $successMessage : ''; ?>";
+		</script>
         
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
