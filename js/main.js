@@ -66,10 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
         $dateInput.value = getTodayDate();
     }
 	
-	// ADD: Event listener for the Cancel button to reload expenses.php
-	document.getElementById('cancelButton').addEventListener('click', function() {
-		window.location.href = 'expenses.php'; // Przekierowanie do expenses.php
-	});
+    document.getElementById('cancelButton').addEventListener('click', function() {
+        if (window.location.href.includes('expenses.php')) {
+            window.location.href = 'expenses.php';
+        } else if (window.location.href.includes('incomes.php')) {
+            window.location.href = 'incomes.php';
+        }
+    });
 
     // Form submission validation
     $form.addEventListener('submit', function(e) {
