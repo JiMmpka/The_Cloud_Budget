@@ -12,10 +12,32 @@ function loadHTML(elementId, url) {
         .catch(error => alert('Error loading component: ' + error.message));
 }
 
+function showSuccessModal(message) {
+    if (message) {
+        $(document).ready(function() {
+            $('#successModal').modal('show');
+        });
+    }
+}
+
+function getTodayDate() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function validateDate(dateString) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+    const date = new Date(dateString);
+    const minDate = new Date('2000-01-01');
+    const maxDate = new Date();
+    return !isNaN(date.getTime()) && date >= minDate && date <= maxDate;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadHTML('header', 'components_header.html');
     loadHTML('navbar', 'components_navbar.html');
 
+    const $form = document.getElementById('form');
     const $dateInput = document.getElementById('date');
     const $modalDatepicker = $('#modalDatepicker');
     const $openDateModal = $('#openDateModal');
@@ -41,11 +63,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize the input field with today's date if it's empty
     if (!$dateInput.value) {
-        $dateInput.value = new Date().toISOString().split('T')[0];
+        $dateInput.value = getTodayDate();
     }
+	
+	// ADD: Event listener for the Cancel button to reload expenses.php
+	document.getElementById('cancelButton').addEventListener('click', function() {
+		window.location.href = 'expenses.php'; // Przekierowanie do expenses.php
+	});
 
     // Form submission validation
-    $('form').on('submit', function(e) {
+    $form.addEventListener('submit', function(e) {
         if (!validateDate($dateInput.value)) {
             alert("The entered date is invalid or out of the allowed range.");
             e.preventDefault();
@@ -57,14 +84,5 @@ document.addEventListener('DOMContentLoaded', function() {
         this.setCustomValidity(validateDate(this.value) ? '' : 'Invalid date. Please enter a date between 2000-01-01 and today.');
     });
 
-    function validateDate(dateString) {
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(dateString)) return false;
-
-        const date = new Date(dateString);
-        const minDate = new Date('2000-01-01');
-        const maxDate = new Date();
-
-        return !isNaN(date.getTime()) && date >= minDate && date <= maxDate;
-    }
+    showSuccessModal(successMessage);
 });
