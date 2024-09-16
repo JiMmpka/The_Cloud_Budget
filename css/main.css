@@ -139,7 +139,7 @@ input[type="number"] {
 }
 
 .modal {
-	z-index: 1150; /* ADD: Ustawienie z-index, aby modal był na wierzchu */
+	z-index: 1150;
 }
 
 .success-message{
@@ -152,4 +152,13 @@ input[type="number"] {
 
 #successMessage {
 	margin: 0;
+}
+
+.card{
+	background-color: rgb(255 255 255 / 80%) !important;
+}
+
+.card-header-font-size{
+	font-size:1.5rem;
+	font-weight:400;
 }
