@@ -1,8 +1,101 @@
+<?php
+	session_start();
+
+	if ((!isset($_SESSION['loggedIn'])) || ($_SESSION['loggedIn'] !== true)) {
+		header('Location: login.php');
+		exit();
+	}
+
+	$config = require_once "connect.php";
+	
+	$dsn = "mysql:host=" . $config['host'] . ";dbname=" . $config['database'] . ";charset=utf8";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+	];
+
+	try {
+		$pdo = new PDO($dsn, $config['user'], $config['password'], $options);
+		$user_id_form_db = $_SESSION['id'];
+
+		    // Ustawienia domyślne dla dat
+    $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01'); // Początek miesiąca
+    $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t'); // Koniec miesiąca
+
+    // Pobieranie danych z tabeli incomes
+    $stmt = $pdo->prepare("
+        SELECT 
+            i.date_of_income, 
+            ic.name AS income_category_name, 
+            i.amount, 
+            i.income_comment 
+        FROM 
+            incomes i
+        JOIN 
+            incomes_category_assigned_to_users ic ON i.income_category_assigned_to_user_id = ic.id
+        WHERE 
+            i.user_id = ? AND 
+            i.date_of_income BETWEEN ? AND ?
+    ");
+    
+    $stmt->execute([$user_id_form_db, $start_date, $end_date]);
+    $incomes = $stmt->fetchAll();
+
+    // Pobieranie danych z tabeli expenses
+    $stmt = $pdo->prepare("
+        SELECT 
+            e.date_of_expense, 
+            ec.name AS expense_category_name, 
+            e.amount, 
+            e.expense_comment 
+        FROM 
+            expenses e
+        JOIN 
+            expenses_category_assigned_to_users ec ON e.expense_category_assigned_to_user_id = ec.id
+        WHERE 
+            e.user_id = ? AND 
+            e.date_of_expense BETWEEN ? AND ?
+    ");
+    
+    $stmt->execute([$user_id_form_db, $start_date, $end_date]);
+    $expenses = $stmt->fetchAll();
+	
+	// Przygotowanie danych dla wykresu
+    $expenseCategories = [];
+    $backgroundColors = [];
+
+    foreach ($expenses as $expense) {
+        $categoryName = $expense['expense_category_name'];
+        $amount = (float)$expense['amount'];
+
+        if (!isset($expenseCategories[$categoryName])) {
+            $expenseCategories[$categoryName] = $amount;
+            $backgroundColors[] = sprintf('rgba(%d, %d, %d, 0.7)', rand(0, 255), rand(0, 255), rand(0, 255));
+        } else {
+            $expenseCategories[$categoryName] += $amount;
+        }
+    }
+
+    // Sortowanie kategorii według kwoty (opcjonalne)
+    arsort($expenseCategories);
+
+    // Przygotowanie danych do przekazania do JavaScript
+    $labels = array_keys($expenseCategories);
+    $data = array_values($expenseCategories);
+
+    $totalIncome = array_sum(array_column($incomes, 'amount'));
+    $totalExpenses = array_sum(array_column($expenses, 'amount'));
+    $balance = $totalIncome - $totalExpenses;
+
+	} catch (PDOException $e) {
+		echo "Error: " . htmlspecialchars($e->getMessage());
+	}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head id="header"></head>
-
 <body>
     <div id="navbar"></div>
 
@@ -10,7 +103,7 @@
         <div class="container mt-5 container-balanse ">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Balance Sheet</h2>
-                <button class="btn btn-primary" id="selectPeriodBtn">Select Period</button>
+                <button class="btn btn-primary" id="selectPeriodBtn" data-bs-toggle="modal" data-bs-target="#periodModal">Select Period</button>
             </div>
 
             <div class="row">
@@ -27,17 +120,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>2024-07-19</td>
-                                    <td>Salary</td>
-                                    <td>Monthly salary</td>
-                                    <td class="text-end">$5,000.00</td>
-                                </tr>
+                                <?php foreach ($incomes as $income): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($income['date_of_income']); ?></td>
+                                        <td><?php echo htmlspecialchars($income['income_category_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($income['income_comment']); ?></td>
+                                        <td class="text-end"><?php echo number_format($income['amount'], 2); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                             <tfoot>
                                 <tr class="table-summary-color">
                                     <th colspan="3" class="text-end">Total Income:</th>
-                                    <th class="text-end">$5,000.00</th>
+                                    <th class="text-end"><?php echo number_format(array_sum(array_column($incomes, 'amount')), 2); ?></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -57,68 +152,105 @@
                               </tr>
                           </thead>
                           <tbody>
-                              <tr>
-                                  <td>2024-07-19</td>
-                                  <td>Food</td>
-                                  <td>Groceries</td>
-                                  <td class="text-end">$800.00</td>
-                              </tr>
-                              <tr>
-                                  <td>2024-07-19</td>
-                                  <td>Housing</td>
-                                  <td>Rent payment</td>
-                                  <td class="text-end">$1,200.00</td>
-                              </tr>
-                              <tr>
-                                  <td>2024-07-19</td>
-                                  <td>Transport</td>
-                                  <td>Bus ticket</td>
-                                  <td class="text-end">$400.00</td>
-                              </tr>
-                              <tr>
-                                  <td>2024-07-19</td>
-                                  <td>Phone</td>
-                                  <td>Phone bill</td>
-                                  <td class="text-end">$150.00</td>
-                              </tr>
+                              <?php foreach ($expenses as $expense): ?>
+                                  <tr>
+                                      <td><?php echo htmlspecialchars($expense['date_of_expense']); ?></td>
+                                      <td><?php echo htmlspecialchars($expense['expense_category_name']); ?></td>
+                                      <td><?php echo htmlspecialchars($expense['expense_comment']); ?></td>
+                                      <td class="text-end"><?php echo number_format($expense['amount'], 2); ?></td>
+                                  </tr>
+                              <?php endforeach; ?>
                           </tbody>
                           <tfoot>
                               <tr class="table-summary-color">
                                   <th colspan="3" class="text-end ">Total Expenses:</th>
-                                  <th class="text-end">$2,550.00</th>
+                                  <th class="text-end"><?php echo number_format(array_sum(array_column($expenses, 'amount')), 2); ?></th>
                               </tr>
                           </tfoot>
                       </table>
                     </div>
                 </div>
+
             </div>
 
+            <!-- Modal for selecting period -->
+            <div class="modal fade" id="periodModal" tabindex="-1" aria-labelledby="periodModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="periodModalLabel">Select Period</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <label for="start_date">Start Date:</label><br />
+                                <input type="date" id="start_date" name="start_date" required value="<?php echo isset($_POST['start_date']) ? $_POST['start_date'] : ''; ?>"><br /><br />
+                                
+                                <label for="end_date">End Date:</label><br />
+                                <input type="date" id="end_date" name="end_date" required value="<?php echo isset($_POST['end_date']) ? $_POST['end_date'] : ''; ?>">
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Apply</button> <!-- Submit the form -->
+                            </div>
+
+                        </div>
+                    </form> 
+                </div> 
+            </div>
+
+            <!-- Summary Table -->
+            <?php
+            $totalIncome = array_sum(array_column($incomes, 'amount'));
+            $totalExpenses = array_sum(array_column($expenses, 'amount'));
+            ?>
+			
+            <!-- Summary Table -->
             <h3 class="mt-4">Summary</h3>
             <table class="table table-bordered">
                 <tbody>
                     <tr >
                         <th>Total Income</th>
-                        <td class="text-end">$5,000.00</td>
+                        <td class="text-end"><?php echo number_format($totalIncome, 2); ?></td>
                     </tr>
-                    <tr>
+                    <tr >
                         <th>Total Expenses</th>
-                        <td class="text-end">$2,550.00</td>
-                    </tr>
+                        <td class="text-end"><?php echo number_format($totalExpenses, 2); ?></td>
+                    </tr> 
+                    <?php 
+                    $balance = $totalIncome - $totalExpenses; 
+                    ?>
                     <tr class="table-summary-color">
                         <th>Balance</th>
-                        <td class="text-end"><strong>$2,450.00</strong></td>
-                    </tr>
-                </tbody>
+                        <td class="text-end"><strong><?php echo number_format($balance, 2); ?></strong></td> 
+                    </tr> 
+                </tbody> 
             </table>
 
-            <h3 class="mt-4">Expenses Pie Chart</h3>
-            <div class="chart-container">
-                <canvas id="expensesChart"></canvas>
-            </div>
-        </div>
-        <div class="bottom-spacing"></div>
-    </main>
+            <!-- Pie Chart -->
+			<div class="row mt-4">
+				<h3>Expenses Distribution</h3>
+				<div class="col-lg-8 offset-lg-2">	
+					<div style="position: relative; height: 50vh; width: 100%;">
+						<canvas id="expensesChart"></canvas>
+					</div>
+				</div>
+			</div>
 
+            <script>
+                const labels = <?php echo json_encode($labels); ?>;
+                const chartData = <?php echo json_encode($data); ?>;
+                const backgroundColors = <?php echo json_encode($backgroundColors); ?>;
+            </script>
+
+        </div>
+
+        <!-- Bottom spacing for layout purposes -->
+        <div class="bottom-spacing"></div>
+
+    </main>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
