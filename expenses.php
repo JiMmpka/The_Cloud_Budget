@@ -19,7 +19,7 @@
 	
 		$user_id_form_db = $_SESSION['id'];
 	
-		// Pobieranie danych z tabeli expenses_category_assigned_to_users
+		// Retrieving data from the expenses_category_assigned_to_users table
 		$stmt = $pdo->prepare("SELECT * FROM expenses_category_assigned_to_users WHERE user_id = ?");
 		$stmt->execute([$user_id_form_db]);
 	
@@ -30,7 +30,7 @@
 			$_SESSION['expenses_category_error'] = '<span class="error">Unable to load category names</span>';
 		}
 	
-		// Pobieranie danych z tabeli payment_methods_assigned_to_users
+		// Retrieving data from the payment_methods_assigned_to_users table
 		$stmt = $pdo->prepare("SELECT * FROM payment_methods_assigned_to_users WHERE user_id = ?");
 		$stmt->execute([$user_id_form_db]);
 	
@@ -46,20 +46,20 @@
 	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$validation_passed = true;
-		// Pobieranie danych z formularza
+		// Retrieving data from the form
 		$amount = filter_var($_POST['amount'], FILTER_VALIDATE_FLOAT);
 		$date = $_POST['date'];
-		$paymentMethod = isset($_POST['paymentMethod']) ? $_POST['paymentMethod'] : null; // Pobranie metody płatności
-		$category = isset($_POST['category']) ? $_POST['category'] : null; // Pobranie kategorii
+		$paymentMethod = isset($_POST['paymentMethod']) ? $_POST['paymentMethod'] : null; // Getting the payment method
+		$category = isset($_POST['category']) ? $_POST['category'] : null; // Getting the category
 		$comment = isset($_POST['comment']) ? $_POST['comment'] : null;
 
-		// Walidacja amount
+		// Validating amount
 		if (!is_numeric($amount) || $amount <= 0) {
 			$validation_passed = false;
 			$_SESSION['e_amount'] = "Invalid amount. It must be a positive number.";
 		}
 
-		// Walidacja date
+		// Validating date
 		$date_regex = '/^\d{4}-\d{2}-\d{2}$/';
 		if (!preg_match($date_regex, $date)) {
 			$validation_passed = false;
@@ -72,24 +72,24 @@
 			$_SESSION['e_date'] = "Invalid date. Please enter a valid date.";
 		}
 		
-		// Walidacja metody płatności
+		// Validating payment method
 		if (!isset($_POST['paymentMethod']) || !in_array($_POST['paymentMethod'], array_column($payment_methods_user_data, 'name'))) {
 			$validation_passed = false;
 			$_SESSION['e_paymentMethod'] = "Invalid payment method.";
 		}
 
-		// Walidacja kategorii
+		// Validating category
 		if (!isset($_POST['category']) || !in_array($_POST['category'], array_column($expenses_category_user_data, 'name'))) {
 			$validation_passed = false;
 			$_SESSION['e_category'] = "Invalid category selected.";
 		}
 
-		// Walidacja komentarza (opcjonalne)
+		// Validating comment (optional)
 		$comment = isset($_POST['comment']) ? htmlspecialchars($_POST['comment'], ENT_QUOTES, 'UTF-8') : null;
 				
 		try {	
 			if ($validation_passed) {    
-				// Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
+				// Hooray, all tests passed, let's add the player to the database
 				$stmt = $pdo->prepare("
 				INSERT INTO expenses (user_id, expense_category_assigned_to_user_id, payment_method_assigned_to_user_id, amount, date_of_expense, expense_comment) 
 				VALUES (?, 
@@ -121,10 +121,10 @@
 			//echo '<br />Developer Information: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
 		}
 	}
-	// ADD: Wyświetlenie komunikatu o sukcesie
+	// ADD: Displaying success message
 	if (isset($_SESSION['success_message'])) {
 		$successMessage = $_SESSION['success_message'];
-		unset($_SESSION['success_message']); // ADD: Usuń komunikat po wyświetleniu
+		unset($_SESSION['success_message']); // ADD: Remove the message after displaying
 	}
 ?>
 
@@ -216,7 +216,7 @@
 								<option value="" disabled <?php echo !isset($_SESSION['fr_category']) ? 'selected' : ''; ?>>Select category</option>
 								<?php
 								foreach ($expenses_category_user_data as $expenses_category) {
-									// Sprawdzamy, czy dana kategoria była wcześniej wybrana
+									// We check if a given category was previously selected
 									$selected = isset($_SESSION['fr_category']) && $_SESSION['fr_category'] == $expenses_category['name'] ? 'selected' : '';
 									echo '<option value="' . htmlspecialchars($expenses_category['name'], ENT_QUOTES, 'UTF-8') . '" ' . $selected . '>' . htmlspecialchars($expenses_category['name'], ENT_QUOTES, 'UTF-8') . '</option>';
 								}
@@ -239,7 +239,7 @@
 								value="<?php
 								if (isset($_SESSION['fr_comment'])) {
 									echo htmlspecialchars($_SESSION['fr_comment'], ENT_QUOTES, 'UTF-8');
-									unset($_SESSION['fr_comment']); // Opcjonalnie: usuń po wyświetleniu
+									unset($_SESSION['fr_comment']);
 								}
 								?>">
 						</div>

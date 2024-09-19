@@ -19,11 +19,11 @@
 		$pdo = new PDO($dsn, $config['user'], $config['password'], $options);
 		$user_id_form_db = $_SESSION['id'];
 
-		    // Ustawienia domyślne dla dat
-    $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01'); // Początek miesiąca
-    $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t'); // Koniec miesiąca
+	// Default settings for dates
+    $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01'); // Beginning of the month
+    $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t'); // End of the month
 
-    // Pobieranie danych z tabeli incomes
+    // Getting data from the incomes table
     $stmt = $pdo->prepare("
         SELECT 
             i.date_of_income, 
@@ -42,7 +42,7 @@
     $stmt->execute([$user_id_form_db, $start_date, $end_date]);
     $incomes = $stmt->fetchAll();
 
-    // Pobieranie danych z tabeli expenses
+    // Retrieving data from the expenses table
     $stmt = $pdo->prepare("
         SELECT 
             e.date_of_expense, 
@@ -61,7 +61,7 @@
     $stmt->execute([$user_id_form_db, $start_date, $end_date]);
     $expenses = $stmt->fetchAll();
 	
-	// Przygotowanie danych dla wykresu
+	// Preparing data for the chart
     $expenseCategories = [];
     $backgroundColors = [];
 
@@ -77,10 +77,10 @@
         }
     }
 
-    // Sortowanie kategorii według kwoty (opcjonalne)
+    // Sort categories by amount (optional)
     arsort($expenseCategories);
 
-    // Przygotowanie danych do przekazania do JavaScript
+    // Preparing data to be passed to JavaScript
     $labels = array_keys($expenseCategories);
     $data = array_values($expenseCategories);
 
@@ -183,17 +183,22 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
 
-                            <div class="modal-body">
-                                <label for="start_date">Start Date:</label><br />
-                                <input type="date" id="start_date" name="start_date" required value="<?php echo isset($_POST['start_date']) ? $_POST['start_date'] : ''; ?>"><br /><br />
-                                
-                                <label for="end_date">End Date:</label><br />
-                                <input type="date" id="end_date" name="end_date" required value="<?php echo isset($_POST['end_date']) ? $_POST['end_date'] : ''; ?>">
+                            <div class="modal-body p-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="w-100 mb-3">
+                                        <label for="start_date" class="form-label m-0">Start Date:</label>
+                                        <input type="date" id="start_date" name="start_date" class="form-control" required value="<?php echo isset($_POST['start_date']) ? $_POST['start_date'] : ''; ?>">
+                                    </div>
+                                    <div class="w-100">
+                                        <label for="end_date" class="form-label m-0">End Date:</label>
+                                        <input type="date" id="end_date" name="end_date" class="form-control" required value="<?php echo isset($_POST['end_date']) ? $_POST['end_date'] : ''; ?>">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Apply</button> <!-- Submit the form -->
+                            <div class="modal-footer d-flex justify-content-center">
+								<button type="submit" class="btn btn-primary">Apply</button> <!-- Submit the form -->
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>                    
                             </div>
 
                         </div>

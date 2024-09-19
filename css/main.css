@@ -103,7 +103,7 @@ input[type="number"] {
   }
 
   .expenses-table {
-      margin-top: 30px; /* Dodaj margines, aby oddzielić tabele */
+      margin-top: 30px;
   }
 }
 
