@@ -20,7 +20,7 @@
   </head>
   <body>
     
-      <!-- Home page with Login Component -->
+      <!-- Login Component -->
     <section class="bg-primary d-flex align-items-center min-vh-100 py-4">
       <div class="container">
         <div class="row gy-4 justify-content-center align-items-center">

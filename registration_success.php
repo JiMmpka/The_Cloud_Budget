@@ -8,13 +8,13 @@
 		unset($_SESSION['successful_registration']);
 	}
 	
-	//Usuwanie zmiennych pamiętających wartości wpisane do formularza
+  //Deleting variables that remember values ​​entered into the form
 	if (isset($_SESSION['fr_name'])) unset($_SESSION['fr_name']);
 	if (isset($_SESSION['fr_email'])) unset($_SESSION['fr_email']);
 	if (isset($_SESSION['fr_pass1'])) unset($_SESSION['fr_pass1']);
 	if (isset($_SESSION['fr_pass2'])) unset($_SESSION['fr_pass2']);
 	
-	//Usuwanie błędów rejestracji
+	//Removing registration errors
 	if (isset($_SESSION['e_name'])) unset($_SESSION['e_name']);
 	if (isset($_SESSION['e_email'])) unset($_SESSION['e_email']);
 	if (isset($_SESSION['e_password'])) unset($_SESSION['e_password']);

@@ -4,10 +4,10 @@ session_start();
 if (isset($_POST['email'])) {
     $validation_passed = true;
     
-    // Sprawdź poprawność name'a
+    // Check the validity of the name
     $name = $_POST['name'];
     
-    // Sprawdzenie długości nicka
+    // Check the length of the username
     if ((strlen($name) < 3) || (strlen($name) > 20)) {
         $validation_passed = false;
         $_SESSION['e_name'] = "The name should be between 3 and 20 characters long";
@@ -18,7 +18,7 @@ if (isset($_POST['email'])) {
         $_SESSION['e_name'] = "The name can only consist of letters and numbers";
     }
     
-    // Sprawdź poprawność adresu email
+    // Check the validity of the email address
     $email = $_POST['email'];
     $emailB = filter_var($email, FILTER_SANITIZE_EMAIL);
     
@@ -27,7 +27,7 @@ if (isset($_POST['email'])) {
         $_SESSION['e_email'] = "Please provide a valid email address";
     }
     
-    // Sprawdź poprawność hasła
+    // Check the validity of the password
     $password1 = $_POST['password1'];
     $password2 = $_POST['password2'];
     
@@ -43,7 +43,7 @@ if (isset($_POST['email'])) {
 
     $hash_password = password_hash($password1, PASSWORD_DEFAULT);
 
-    // Zapamiętaj wprowadzone dane
+    // Remember the entered data
     $_SESSION['fr_name'] = $name;
     $_SESSION['fr_email'] = $email;
     $_SESSION['fr_pass1'] = $password1;
@@ -61,7 +61,7 @@ if (isset($_POST['email'])) {
     try {
         $pdo = new PDO($dsn, $config['user'], $config['password'], $options);
     
-        // Sprawdź, czy email już istnieje
+        // Check if the email already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
 
@@ -71,14 +71,14 @@ if (isset($_POST['email'])) {
         }
             
         if ($validation_passed) {    
-            // Hurra, wszystkie testy zaliczone, dodajemy gracza do bazy
+            // Hooray, all tests passed, let's add the player to the database
             $stmt = $pdo->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
 
             if ($stmt->execute([$name, $hash_password, $email])) {    
               $_SESSION['successful_registration'] = true;
 				      $userId = $pdo->lastInsertId();
 				
-                // Rozpoczęcie transakcji
+                // Start transaction
               $pdo->beginTransaction();
 
               try {
@@ -94,13 +94,13 @@ if (isset($_POST['email'])) {
                             SELECT ?, `name` FROM payment_methods_default");
                 $stmt->execute([$userId]);
 
-                // Zatwierdź transakcję
+                // Commit the transaction
                 $pdo->commit();
 
                 header('Location: registration_success.php');
                 exit();
               } catch (Exception $e) {
-                // Wycofaj transakcję w przypadku błędu
+                // Rollback the transaction in case of an error
                 $pdo->rollBack();
                 throw new Exception("Failed to assign categories: " . $e->getMessage());
               }

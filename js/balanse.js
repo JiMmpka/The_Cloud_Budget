@@ -24,32 +24,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Funkcja do zmiany rozmiaru wykresu
+    // Function to resize the chart
     function resizeChart() {
         expensesChartDynamic.resize();
     }
 
-    // Nasłuchiwanie na zmianę rozmiaru okna
+    // Listening for window resize events
     window.addEventListener('resize', resizeChart);
 
-    // Inicjalne wywołanie funkcji resizeChart
+    // Initial call to the resizeChart function
     resizeChart();
 	
-	    // Obsługa modalu z datami
+	// Handling the modal with dates
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
     const periodForm = document.getElementById('periodForm');
 
-    // Ustawienie formatu daty na yyyy-mm-dd
+    // Setting the date format to yyyy-mm-dd
     startDateInput.setAttribute('min', '2000-01-01');
     endDateInput.setAttribute('min', '2000-01-01');
 
-    // Ustawienie dzisiejszej daty jako maksymalnej
+    // Setting today's date as the maximum
     const today = new Date().toISOString().split('T')[0];
     startDateInput.setAttribute('max', today);
     endDateInput.setAttribute('max', today);
 
-    // Walidacja dat
+    // Date validation
     startDateInput.addEventListener('change', function() {
         endDateInput.setAttribute('min', this.value);
     });
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         startDateInput.setAttribute('max', this.value);
     });
 
-    // Walidacja formularza przed wysłaniem
+    // Form validation before submission
     periodForm.addEventListener('submit', function(event) {
         const startDate = new Date(startDateInput.value);
         const endDate = new Date(endDateInput.value);
