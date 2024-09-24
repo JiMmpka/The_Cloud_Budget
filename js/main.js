@@ -34,58 +34,70 @@ function validateDate(dateString) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadHTML('header', 'components_header.html');
-    loadHTML('navbar', 'components_navbar.html');
-
+    loadHTML('header', 'components_header.php');
+    loadHTML('navbar', 'components_navbar.php');
+    
     const $form = document.getElementById('form');
     const $dateInput = document.getElementById('date');
     const $modalDatepicker = $('#modalDatepicker');
     const $openDateModal = $('#openDateModal');
-    const dateModal = new bootstrap.Modal(document.getElementById('dateModal'));
+    const dateModalElement = document.getElementById('dateModal');
 
-    $modalDatepicker.datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true
-    });
+    // Only initialize modal-related functionality if the dateModal exists
+    if (dateModalElement) {
+        const dateModal = new bootstrap.Modal(dateModalElement);
 
-    $openDateModal.on('click', () => dateModal.show());
-
-    $modalDatepicker.on('changeDate', function(e) {
-        const selectedDate = e.format(0, "yyyy-mm-dd");
-        if (validateDate(selectedDate)) {
-            $dateInput.value = selectedDate;
-            dateModal.hide();
-        } else {
-            alert("Invalid date. Please enter a date between 2000-01-01 and today.");
+        if ($modalDatepicker.length) {
+            $modalDatepicker.datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true
+            });
         }
-    });
 
-    // Initialize the input field with today's date if it's empty
-    if (!$dateInput.value) {
+        if ($openDateModal.length) {
+            $openDateModal.on('click', () => dateModal.show());
+        }
+
+        // Modal datepicker functionality
+        if ($modalDatepicker.length) {
+            $modalDatepicker.on('changeDate', function(e) {
+                const selectedDate = e.format(0, "yyyy-mm-dd");
+                if (validateDate(selectedDate)) {
+                    $dateInput.value = selectedDate;
+                    dateModal.hide();
+                } else {
+                    alert("Invalid date. Please enter a date between 2000-01-01 and today.");
+                }
+            });
+        }
+    }
+
+    // Initialize the input field with today's date if it's empty and exists
+    if ($dateInput && !$dateInput.value) {
         $dateInput.value = getTodayDate();
     }
-	
-    document.getElementById('cancelButton').addEventListener('click', function() {
-        if (window.location.href.includes('expenses.php')) {
-            window.location.href = 'expenses.php';
-        } else if (window.location.href.includes('incomes.php')) {
-            window.location.href = 'incomes.php';
-        }
-    });
 
     // Form submission validation
-    $form.addEventListener('submit', function(e) {
-        if (!validateDate($dateInput.value)) {
-            alert("The entered date is invalid or out of the allowed range.");
-            e.preventDefault();
-        }
-    });
+    if ($form) {
+        $form.addEventListener('submit', function(e) {
+            if ($dateInput && !validateDate($dateInput.value)) {
+                alert("The entered date is invalid or out of the allowed range.");
+                e.preventDefault();
+            }
+        });
+    }
 
     // Real-time validation on input change
-    $dateInput.addEventListener('input', function() {
-        this.setCustomValidity(validateDate(this.value) ? '' : 'Invalid date. Please enter a date between 2000-01-01 and today.');
-    });
+    if ($dateInput) {
+        $dateInput.addEventListener('input', function() {
+            this.setCustomValidity(validateDate(this.value) ? '' : 'Invalid date. Please enter a date between 2000-01-01 and today.');
+        });
+    }
 
-    showSuccessModal(successMessage);
+    // Only show success modal if it exists
+    const successModal = document.getElementById('successModal');
+    if (successModal && typeof successMessage !== 'undefined' && successMessage) {
+        new bootstrap.Modal(successModal).show();
+    }
 });

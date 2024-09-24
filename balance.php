@@ -176,7 +176,7 @@
             <!-- Modal for selecting period -->
             <div class="modal fade" id="periodModal" tabindex="-1" aria-labelledby="periodModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
-                    <form method="POST" action="">
+                    <form method="POST" action="" id="periodForm">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="periodModalLabel">Select Period</h5>

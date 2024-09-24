@@ -1,3 +1,12 @@
+<?php
+	session_start();
+
+	if ((!isset($_SESSION['loggedIn'])) || ($_SESSION['loggedIn'] !== true)) {
+		header('Location: login.php');
+		exit();
+	}
+?>
+
 <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
   <symbol id="home" viewBox="0 0 16 16">
     <path d="M8 6.982C9.664 5.309 13.825 8.236 8 12 2.175 8.236 6.336 5.309 8 6.982"/>
